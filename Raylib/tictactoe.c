@@ -6,15 +6,15 @@
 
 #define BOARD_SIZE 3
 #define CELL_SIZE 150
-#define LINES_COLOR (Color){35, 31, 32, 1}
-#define WINNING_LINE (Color){255, 215, 0, 1}
-#define X_COLOR (Color){229, 68, 109, 1}
-#define O_COLOR (Color){73, 220, 177, 1}
+#define LINES_COLOR (Color){35, 31, 32, 255}
+#define WINNING_LINE (Color){255, 215, 0, 255}
+#define X_COLOR (Color){229, 68, 109, 255}
+#define O_COLOR (Color){73, 220, 177, 255}
 
 typedef enum{
     MENU,
     GAMEPLAY,
-    GAMEOVER
+    GAME_OVER
 }GameState;
 
 typedef struct{
@@ -61,7 +61,7 @@ int CheckWinner(Game *game){
         return board[0][0];
     }
 
-    if(board[0][2] != 0 && board[0][2] = board[1][1] && board[0][2] == board[2][0]){
+    if(board[0][2] != 0 && board[0][2] == board[1][1] && board[0][2] == board[2][0]){
         return board[0][2];
     }
 
@@ -82,7 +82,7 @@ int CheckWinner(Game *game){
 
 void DrawBoard(Game *game){
     int offsetX = (SCREEN_WIDTH - BOARD_SIZE * CELL_SIZE) / 2;
-    int offsetY = (SCREEN_WIDTH - BOARD_SIZE * CELL_SIZE) / 2;
+    int offsetY = (SCREEN_HEIGHT - BOARD_SIZE * CELL_SIZE) / 2;
 
     for(int i = 1; i < BOARD_SIZE; i++){
         DrawLine(offsetX + i * CELL_SIZE, offsetY,
@@ -95,7 +95,7 @@ void DrawBoard(Game *game){
     for(int i = 0; i < BOARD_SIZE; i++){
         for(int j = 0; j < BOARD_SIZE; j++){
             int posX = offsetX + j * CELL_SIZE + CELL_SIZE / 2;
-            int posY = offsetY + j * CELL_SIZE + CELL_SIZE / 2;
+            int posY = offsetY + i * CELL_SIZE + CELL_SIZE / 2;
 
             if(game->board[i][j] == 1){
                 DrawLine(posX - 40, posY - 40, posX + 40, posY + 40, X_COLOR);
@@ -117,5 +117,88 @@ void DrawBoard(Game *game){
 
 void DrawMenu(Game *game){
     DrawText("TaTeTi", SCREEN_WIDTH/2 - MeasureText("TaTeTi", 40)/2, 100, 40, DARKGRAY);
-    DrawText("Presiona ESPACIO para comenzar", SCREEN_WIDTH/2 - MesureText("Presiona ESPACIO para comenzar", 20)/2, 200, 20, GRAY);
+    DrawText("Presiona ESPACIO para comenzar", SCREEN_WIDTH/2 - MeasureText("Presiona ESPACIO para comenzar", 20)/2, 200, 20, GRAY);
+}
+
+void DrawGameOver(Game* game){
+    DrawBoard(game);
+
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, Fade(RAYWHITE, 0.8f));
+
+    if(game->winner == 3){
+        DrawText("¡Empate!", SCREEN_WIDTH/2 - MeasureText("¡Empate!", 40)/2, 100, 40,DARKGRAY);
+    } else{
+        const char *winnerText = (game->winner == 1) ? "!X Gana!" : "¡O Gana!";
+        DrawText(winnerText, SCREEN_WIDTH/2 - MeasureText(winnerText, 40)/2, 100, 40, (game->winner == 1) ? X_COLOR : O_COLOR);
+    }
+
+    DrawText("Presiona R para reiniciar", SCREEN_WIDTH/2 - MeasureText("Presiona R para reiniciar", 20)/2, 200, 20, GRAY);
+}
+
+int main(void){
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "TaTeTi con Raylib");
+    SetTargetFPS(60);
+
+    Game game;
+    InitGame(&game);
+
+    while(!WindowShouldClose()){
+        if(game.state == MENU){
+            if(IsKeyPressed(KEY_SPACE)){
+                game.state = GAMEPLAY;
+            }
+        }else if(game.state == GAMEPLAY){
+            int offsetX = (SCREEN_WIDTH - BOARD_SIZE * CELL_SIZE) /2;
+            int offsetY = (SCREEN_HEIGHT - BOARD_SIZE * CELL_SIZE) /2;
+
+            Vector2 mousePos = GetMousePosition();
+            game.mouseHoverX = -1;
+            game.mouseHoverY = -1;
+
+            if(mousePos.x >= offsetX && mousePos.x <= offsetX + BOARD_SIZE * CELL_SIZE && 
+                mousePos.y >= offsetY && mousePos.y <= offsetY + BOARD_SIZE * CELL_SIZE){
+                    game.mouseHoverX = (int)((mousePos.x - offsetX) / CELL_SIZE);
+                    game.mouseHoverY = (int)((mousePos.y - offsetY) / CELL_SIZE);
+
+                    if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)){
+                        if(game.board[game.mouseHoverY][game.mouseHoverX]== 0){
+                            game.board[game.mouseHoverY][game.mouseHoverX] = game.currentPlayer;
+
+                            game.winner = CheckWinner(&game);
+                            if(game.winner != 0){
+                                game.state = GAME_OVER;
+                            }else{
+                                game.currentPlayer = (game.currentPlayer == 1) ? 2 : 1;
+                            }
+                        }
+                    }
+                }
+        }else if(game.state == GAME_OVER){
+            if(IsKeyPressed(KEY_R)){
+                InitGame(&game);
+            }
+        }
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        if(game.state == MENU){
+            DrawMenu(&game);
+        }else if(game.state == GAMEPLAY){
+            DrawText("TaTeTi", SCREEN_WIDTH/2 - MeasureText("TaTeTi", 30)/2, 30, 30, DARKGRAY);
+
+            const char *turnText = (game.currentPlayer == 1) ? "Turno: X" : "Turno: O";
+            Color turnColor = (game.currentPlayer == 1) ? X_COLOR : O_COLOR;
+            DrawText(turnText, SCREEN_WIDTH/2 - MeasureText(turnText, 20)/2, 70, 20, turnColor);
+
+            DrawBoard(&game);
+        }else if(game.state == GAME_OVER){
+            DrawGameOver(&game);
+        }
+
+        EndDrawing();
+    }
+
+    CloseWindow();
+
+    return 0;
 }
