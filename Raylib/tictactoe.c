@@ -57,7 +57,7 @@ int CheckWinner(Game *game){
         }
     }
 
-    if(board[0][0] != 0 && board[0][0] == board○[1][1] && board[0][0] == board[2][2]){
+    if(board[0][0] != 0 && board[0][0] == board[1][1] && board[0][0] == board[2][2]){
         return board[0][0];
     }
 
