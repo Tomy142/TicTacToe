@@ -6,7 +6,10 @@
 
 #define BOARD_SIZE 3
 #define CELL_SIZE 150
+#define BACKGROUND_COLOR (Color){240, 240, 240, 255}
+#define GRID_LINE_WIDTH  5.0f 
 #define LINES_COLOR (Color){35, 31, 32, 255}
+#define BOARD_COLOR (Color){110, 110, 110, 1}
 #define WINNING_LINE (Color){255, 215, 0, 255}
 #define X_COLOR (Color){229, 68, 109, 255}
 #define O_COLOR (Color){73, 220, 177, 255}
@@ -84,12 +87,17 @@ void DrawBoard(Game *game){
     int offsetX = (SCREEN_WIDTH - BOARD_SIZE * CELL_SIZE) / 2;
     int offsetY = (SCREEN_HEIGHT - BOARD_SIZE * CELL_SIZE) / 2;
 
+    DrawRectangle(offsetX - 15, offsetY -15,
+                    BOARD_SIZE * CELL_SIZE + 30,
+                    BOARD_SIZE * CELL_SIZE +30,
+                    WHITE);
+
     for(int i = 1; i < BOARD_SIZE; i++){
-        DrawLine(offsetX + i * CELL_SIZE, offsetY,
-                offsetX + i * CELL_SIZE, offsetY + BOARD_SIZE * CELL_SIZE, LINES_COLOR);
+        DrawLineEx((Vector2){offsetX + i * CELL_SIZE, offsetY},
+                (Vector2){offsetX + i * CELL_SIZE, offsetY + BOARD_SIZE * CELL_SIZE}, 5.0f, LINES_COLOR);
         
-        DrawLine(offsetX, offsetY + i * CELL_SIZE,
-                offsetX + BOARD_SIZE * CELL_SIZE, offsetY + i * CELL_SIZE, LINES_COLOR);
+        DrawLineEx((Vector2){offsetX, offsetY + i * CELL_SIZE},
+                (Vector2){offsetX + BOARD_SIZE * CELL_SIZE, offsetY + i * CELL_SIZE}, 5.0f, LINES_COLOR);
     }
 
     for(int i = 0; i < BOARD_SIZE; i++){
@@ -98,10 +106,10 @@ void DrawBoard(Game *game){
             int posY = offsetY + i * CELL_SIZE + CELL_SIZE / 2;
 
             if(game->board[i][j] == 1){
-                DrawLine(posX - 40, posY - 40, posX + 40, posY + 40, X_COLOR);
-                DrawLine(posX + 40, posY - 40, posX - 40, posY + 40, X_COLOR);
+                DrawLineEx((Vector2){posX - 40, posY - 40},(Vector2){ posX + 40, posY + 40}, 8.0f, X_COLOR);
+                DrawLineEx((Vector2){posX + 40, posY - 40},(Vector2){ posX - 40, posY + 40}, 8.0f, X_COLOR);
             }else if(game->board[i][j] == 2){
-                DrawCircleLines(posX, posY, 40, O_COLOR);
+                DrawRing((Vector2){posX, posY},30, 35,0, 360, 0, O_COLOR);
             }
         }
     }
@@ -179,7 +187,7 @@ int main(void){
             }
         }
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(LINES_COLOR);
 
         if(game.state == MENU){
             DrawMenu(&game);
